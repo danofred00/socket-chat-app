@@ -5,7 +5,7 @@ from deps.requests import *
 
 import socket
 import threading
-
+from time import sleep
 
 from constants import *
 from models.user import UserModel
@@ -68,6 +68,8 @@ class Server():
             self.thread_handle_msg = threading.Thread(target=self.handle_for_incoming_messages)
             self.thread_handle_msg.start()
 
+    def stop_handling_for_clients_connections(self):
+        self.handle_connections = False
 
     def stop_handle_for_incoming_msg(self):
         self.handle_messages = False
@@ -78,9 +80,16 @@ class Server():
 
         while self.handle_messages:
             response = self.request.get()
+            # manage all requests by type
             if response.type == REQUEST_SEND_TO_CLIENT:
+                # just for debug
                 print(response)
                 self.request.send(response, use_receiver=True)
+            elif response.type == REQUEST_STOP_SERVER:
+                self.request.send(self.request_factory.make_request(RESPONSE_CLOSE_YOURSELF))
+                sleep(1.0)
+                self.close("[+] Close The server by client request")
+
             
             elif response.type == REQUEST_STOP_SERVER:
                 self.close("[+] Kill server by user request : " + REQUEST_STOP_SERVER)
@@ -153,6 +162,12 @@ class Server():
         # show reason
         print(reason)
 
+        if self.handle_messages:
+            self.stop_handle_for_incoming_msg()
+        
+        if self.handle_connections:
+            self.stop_handling_for_clients_connections()
+
         if self._connection != None:
             self._connection.close()
         # close socket
@@ -160,13 +175,17 @@ class Server():
 
 
 
+
 HOST = env('CONFIG_HOST')
 PORT = int(env('CONFIG_PORT'))
 
+# create the server
 server = Server(HOST, PORT)
 
+# running the server
 server.start()
 
+# start handling for incomning connecions and messages from clients
 server.handle()
 
 # server.close()

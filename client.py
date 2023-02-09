@@ -65,14 +65,17 @@ class Client:
     
     def start(self):
 
-        # trying to auth client
-        response = self.send_auth_request()
+        try:
+            # trying to auth client
+            response = self.send_auth_request()
 
-        if(response.type == RESPONSE_AUTH_FAIL):
-            self.close("[-] User Authentication Error")
-        
-        # start handler
-        self.handle()
+            if(response.type == RESPONSE_AUTH_FAIL):
+                self.close("[-] User Authentication Error")
+            
+            # start handler
+            self.handle()
+        except ConnectionAbortedError:
+            self.close("Connection Aborted Error")
 
     def handle(self):
 
@@ -87,6 +90,7 @@ class Client:
     def stop_command_line(self):
         self.write_in_command_line = False
 
+    # handling for command line
     def start_command_line(self):
 
         self.write_in_command_line = True
@@ -99,9 +103,11 @@ class Client:
                 self.stop_handle_for_incoming_msg()
                 self.close("[+] Quit by user")
 
+            elif data.lower().strip() == "kill-server":
+                self.request.send(self.request_factory.make_kill_server_request("For Maintenance"))
+                # self.close("[+] Quit by killing server")
+
             receiver = input("Receiver: ")
-            
-            print(receiver)
 
             self.request.send(self.request_factory.make_request(
                 REQUEST_SEND_TO_CLIENT,
@@ -121,6 +127,11 @@ class Client:
                 try:
                     response = self.request.get()
                     print(response)
+
+                    # manage all getting response by type
+                    if response.type == RESPONSE_CLOSE_YOURSELF:
+                        self.close("[+] Closing myself response by server")
+
                 except:
                     pass
 
@@ -129,6 +140,12 @@ class Client:
 
         # show the reason
         print(reason)
+
+        if self.write_in_command_line:
+            self.stop_command_line()
+        
+        if self.handle_messages:
+            self.stop_handle_for_incoming_msg()
 
         # close the socket
         self._socket.close()

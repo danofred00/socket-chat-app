@@ -109,3 +109,6 @@ class RequestsFactory:
     def make_simple_request(self, headers = {}, options = {}) -> Requests:
         return self.make_request(REQUEST_SEND_TEXT, headers, options)
 
+    def make_kill_server_request(self, reason) -> Requests:
+        return self.make_request(REQUEST_STOP_SERVER, options={"content": reason})
+
