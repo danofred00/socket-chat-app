@@ -43,3 +43,12 @@ class ConnectionModel:
 
         conn = self.get_connection_by_addr(*addr)
         self.connections.remove(conn)
+
+    #
+    def exists_user_connection(self, user :str) -> bool :
+
+        for conn in self.connections:
+            if conn.user.username.lower == user.lower():
+                return True
+        
+        return False
