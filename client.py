@@ -101,23 +101,22 @@ class Client:
         while self.write_in_command_line:
 
             data = input("[Client]> ")
+            data_lower = data.lower().strip()
+            if data_lower == "quit":
+                self.send_quit_request()
 
-            if data.lower().strip() == "quit":
-                self.stop_command_line()
-                self.stop_handle_for_incoming_msg()
-                self.close("[+] Quit by user")
-
-            elif data.lower().strip() == "kill-server":
+            elif data_lower == "kill-server":
                 self.request.send(self.request_factory.make_kill_server_request("For Maintenance"))
                 # self.close("[+] Quit by killing server")
+            
+            else:
+                receiver = input("Receiver: ")
 
-            receiver = input("Receiver: ")
-
-            self.request.send(self.request_factory.make_request(
-                REQUEST_SEND_TO_CLIENT,
-                headers={"receiver" : (receiver.split(' '))},
-                options={"content": data}
-            ))
+                self.request.send(self.request_factory.make_request(
+                    REQUEST_SEND_TO_CLIENT,
+                    headers={"receiver" : (receiver.split(' '))},
+                    options={"content": data}
+                ))
 
 
     def stop_handle_for_incoming_msg(self):
@@ -139,6 +138,10 @@ class Client:
                 except:
                     pass
 
+    def send_quit_request(self):
+        self.request.send(self.request_factory.make_request(
+            REQUEST_CLIENT_QUIT
+        ))
 
     def close(self, reason: str = None):
 

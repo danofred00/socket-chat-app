@@ -38,3 +38,8 @@ class ConnectionModel:
         for conn in self.connections:
             if (host, port) == conn.addr:
                 return conn
+    
+    def remove_connection(self, addr):
+
+        conn = self.get_connection_by_addr(*addr)
+        self.connections.remove(conn)

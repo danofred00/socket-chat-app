@@ -66,10 +66,14 @@ class Server():
             # auth client
             if self.auth_client(self._connection):
                 
-                # handle for incoming clients messages
-                self.thread_handle_msg = threading.Thread(target=self.handle_for_incoming_messages, args=[self._connection])
-                self.thread_handle_msg.start()
-    
+                try:
+
+                    # handle for incoming clients messages
+                    self.thread_handle_msg = threading.Thread(target=self.handle_for_incoming_messages, args=[self._connection])
+                    self.thread_handle_msg.start()
+                except:
+                    print("[+] Exception")
+
 
     def stop_handling_for_clients_connections(self):
         self.handle_connections = False
@@ -83,6 +87,12 @@ class Server():
 
         while self.handle_messages:
             response = self.request.get(use_sock=True, sock=conn)
+
+            # getting sender
+            _sender = self.connections.get_connection_by_addr(
+                *response.headers["sender"]
+            )
+
             # manage all requests by type
             if response.type == REQUEST_SEND_TO_CLIENT:
                 # just for debug
@@ -102,10 +112,17 @@ class Server():
                     use_sock=True
                 )
 
-            elif response.type == REQUEST_STOP_SERVER:
-                self.request.send(self.request_factory.make_request(RESPONSE_CLOSE_YOURSELF))
-                sleep(1.0)
-                self.close("[+] Close The server by client request")
+            elif response.type == REQUEST_CLIENT_QUIT:
+                # send request
+                self.request.send(self.request_factory.make_request(
+                    RESPONSE_CLOSE_YOURSELF
+                    ), use_sock=True, sock=_sender.sock)
+                
+                sleep(2.0)
+
+                print("[+] removing connection for user")
+                self.connections.remove_connection(tuple(response.headers["sender"]))
+                #self.close("[+] Close The server by client request")
 
             
             elif response.type == REQUEST_STOP_SERVER:
