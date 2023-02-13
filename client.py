@@ -31,6 +31,9 @@ class Client:
         self.request = None
         self.request_factory = RequestsFactory()
 
+        # define attributes
+        
+
         # calling methods to init work
         self.connect()
 
@@ -41,8 +44,9 @@ class Client:
             self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self._socket.connect((self.host_url, self.host_port))
             
-            self._connection = self._socket
-            self.request = RequestModel(self._connection)
+            # 
+            #self._connection = self._socket
+            self.request = RequestModel(self._socket)
 
         except ConnectionRefusedError:
             self.close(f"Unable to connect to the server {self.host_url} : {self.host_port}")
@@ -141,11 +145,14 @@ class Client:
         # show the reason
         print(reason)
 
-        if self.write_in_command_line:
-            self.stop_command_line()
-        
-        if self.handle_messages:
-            self.stop_handle_for_incoming_msg()
+        try:
+            if self.write_in_command_line:
+                self.stop_command_line()
+            
+            if self.handle_messages:
+                self.stop_handle_for_incoming_msg()
+        except AttributeError:
+            print("[-] Attribute error")
 
         # close the socket
         self._socket.close()

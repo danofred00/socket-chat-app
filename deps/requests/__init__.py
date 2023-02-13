@@ -64,34 +64,61 @@ class Response(Requests):
 
 class RequestModel:
 
-    def __init__(self, sock: socket) -> None:
-        self.sock = sock
-        self.sender = sock.getsockname()
+    def __init__(self, sock: socket = None) -> None:
+        self._sock = sock
+        self.sender = None
     
-    def send(self, req : Requests, use_receiver = False, feedback:bool = False) -> Response | None:
+    @property
+    def sock(self) -> socket:
+        return self._sock
+
+    def setSock(self, sock :socket) -> None:
+        self._sock = sock
+
+    def sender_update(self, sock):
+        self.sender = sock.getsockname()
+
+    def send(self, req : Requests, use_receiver = False, feedback:bool = False, sender = None, use_sock :bool = False, sock : socket = None) -> Response | None:
+
+        # use another socket to send or receive data
+        if use_sock and sock != None:
+            _sock = sock
+        else:
+            _sock = self._sock
+
+        # update the sender for the request
+        if sender == None:
+            self.sender_update(_sock)
+        else:
+            self.sender = tuple(sender)
 
         req.headers["sender"] = self.sender
 
         if use_receiver:
             receiver, port = tuple(req.headers["receiver"])
-            self.sock.sendto(bytes(req.to_JsonString().encode("UTF-8")), (receiver, int(port)))
+            _sock.sendto(bytes(req.to_JsonString().encode("UTF-8")), (receiver, int(port)))
         else:
-            self.sock.send(bytes(req.to_JsonString().encode("UTF-8")))
+            _sock.send(bytes(req.to_JsonString().encode("UTF-8")))
 
         print("[+] New request send : " + req.type)
 
+        # to view later
         if feedback:
             return self.get()
 
     
-    def get(self, size: int = 2048) -> Response:
+    def get(self, size: int = 2048, sock : socket = None, use_sock :bool = False) -> Response:
 
-        data = self.sock.recv(size)
+        # get response
+        if use_sock and sock != None:
+            data = sock.recv(size)
+        else:
+            data = self.sock.recv(size)
+        # format response
         response = Requests.from_JsonString(data.decode("UTF-8").strip())
         print(f"[+] New response from {response.headers}:" + response.type)
         
         return response
-
 
 class RequestsFactory:
 

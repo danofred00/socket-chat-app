@@ -43,30 +43,33 @@ class Server():
 
 
     def handle(self) -> None:
-
-        # handle for clients connections    
-        self.thread_handle_conn = threading.Thread(target=self.handle_clients_connection)
-        self.thread_handle_conn.start()
-
+        
+        try:
+            # handle for clients connections    
+            self.thread_handle_conn = threading.Thread(target=self.handle_clients_connection)
+            self.thread_handle_conn.start()
+        except:
+            pass
     
     def handle_clients_connection(self):
         
         self.handle_connections = True
+        
         while self.handle:
 
             # get connections
             self._connection, addr = self._socket.accept()
-            self.request = RequestModel(self._connection)
 
             print("\n[+] Nouveau client detecter")
             print("[+] En attente d authentification ...")
 
             # auth client
-            self.auth_client(*addr)
-            
-            # handle for incoming clients messages
-            self.thread_handle_msg = threading.Thread(target=self.handle_for_incoming_messages)
-            self.thread_handle_msg.start()
+            if self.auth_client(self._connection):
+                
+                # handle for incoming clients messages
+                self.thread_handle_msg = threading.Thread(target=self.handle_for_incoming_messages, args=[self._connection])
+                self.thread_handle_msg.start()
+    
 
     def stop_handling_for_clients_connections(self):
         self.handle_connections = False
@@ -74,17 +77,31 @@ class Server():
     def stop_handle_for_incoming_msg(self):
         self.handle_messages = False
 
-    def handle_for_incoming_messages(self):
+    def handle_for_incoming_messages(self, conn :socket.socket):
 
         self.handle_messages = True
 
         while self.handle_messages:
-            response = self.request.get()
+            response = self.request.get(use_sock=True, sock=conn)
             # manage all requests by type
             if response.type == REQUEST_SEND_TO_CLIENT:
                 # just for debug
                 print(response)
-                self.request.send(response, use_receiver=True)
+                
+                # get receiver informations
+                host, port = response.headers["receiver"]
+                print(host, port)
+                _conn = self.connections.get_connection_by_addr(host, int(port))
+
+                # forward 
+                self.request.send(
+                    response,
+                    sender=response.headers["sender"],
+                    use_receiver=True, 
+                    sock=_conn.sock, 
+                    use_sock=True
+                )
+
             elif response.type == REQUEST_STOP_SERVER:
                 self.request.send(self.request_factory.make_request(RESPONSE_CLOSE_YOURSELF))
                 sleep(1.0)
@@ -118,33 +135,39 @@ class Server():
         # init connection model
         self.connections = ConnectionModel()
         self.request_factory = RequestsFactory()
+        self.request = RequestModel(self._socket)
 
 
-    def auth_client(self, host, port):
+    def auth_client(self, connection :socket.socket) ->bool:
         
-        req = self.request.get()
+        req = self.request.get(use_sock=True, sock=connection)
         if req.type == REQUEST_AUTH_CLIENT:
 
             data = req.options["content"]
             name, password = tuple(data.strip().split(sep='--'))
 
-            if self.users.auth_user(name, password):
+            res = self.users.auth_user(name, password)
+
+            if res:
 
                 response_type = RESPONSE_AUTH_SUCCESS
                 
                 # if ok, we can create a connection for this user
                 self.connections.create_connection(
                     self.users.get_by_name(name), 
-                    host, port
+                    connection, 
+                    *req.headers["sender"]
                 )
 
             else:
                 response_type = RESPONSE_AUTH_FAIL
             
+            # send the auth response
             self.request.send(self.request_factory.make_request(
-                response_type, headers={"receiver" : (host, port)}
-            ))
+                response_type, headers={"receiver" : req.headers["sender"]}
+            ), use_sock=True, sock=connection)
 
+            return res
 
     
     def send_data(self, data, size: int, feedback = False) -> Response | None:
