@@ -75,7 +75,9 @@ class Client:
 
             if(response.type == RESPONSE_AUTH_FAIL):
                 self.close("[-] User Authentication Error")
-            
+            elif response.type == RESPONSE_ALREADY_ONLINE:
+                self.close("[-] User already online")
+
             # start handler
             self.handle()
         except ConnectionAbortedError:

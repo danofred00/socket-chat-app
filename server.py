@@ -154,6 +154,9 @@ class Server():
         self.request_factory = RequestsFactory()
         self.request = RequestModel(self._socket)
 
+    # write has_connection method
+    def has_connection(self, user :str) -> bool:
+        return self.connections.exists_user_connection(user)
 
     def auth_client(self, connection :socket.socket) ->bool:
         
@@ -167,14 +170,19 @@ class Server():
 
             if res:
 
-                response_type = RESPONSE_AUTH_SUCCESS
-                
-                # if ok, we can create a connection for this user
-                self.connections.create_connection(
-                    self.users.get_by_name(name), 
-                    connection, 
-                    *req.headers["sender"]
-                )
+                if self.has_connection(name):
+
+                    # if user is already online, we can't connect himself again
+                    response_type = RESPONSE_ALREADY_ONLINE
+                else:
+                    response_type = RESPONSE_AUTH_SUCCESS
+                    
+                    # if ok, we can create a connection for this user
+                    self.connections.create_connection(
+                        self.users.get_by_name(name), 
+                        connection, 
+                        *req.headers["sender"]
+                    )
 
             else:
                 response_type = RESPONSE_AUTH_FAIL
