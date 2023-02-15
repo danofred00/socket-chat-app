@@ -6,10 +6,70 @@ from deps.requests import *
 
 import socket
 from threading import Thread
-from typing import Callable, Optional
+from typing import Callable, Optional, Collection
 
 
-class Client:
+class ClientObserver:
+
+    def __init__(self) -> None:
+        
+        self._avaliables_events = ['receive']
+        self._connected_events = {}
+
+    @property
+    def avaliables_events(self):
+        return self._avaliables_events
+    
+    @property
+    def connected_events(self) :
+        return self._connected_events
+
+    def emit(self, event :str, data = None) -> None:
+        
+        if event in self._avaliables_events:
+            
+            if event in self._connected_events.keys():
+                e = self._connected_events[event]
+                func = e['callback']
+                kargs = e['args']
+
+                # calling the function
+                func(data, *kargs)
+            else:
+                raise RuntimeError(f"Signal {event} not connected")
+
+
+    def connect(self, event :str, callback : Callable, args : Collection = None) -> None:
+        
+        # connect signal
+        if event in self._avaliables_events:
+            self._connected_events[event] = {
+                "callback": callback, 
+                "args": args
+            }
+
+class ClientObservable:
+
+    def __init__(self) -> None:
+        self._observers : list[ClientObserver] = []
+    
+    @property
+    def observers(self) -> list[ClientObserver]:
+        return self._observers
+
+    def add_observer(self, observer : ClientObserver):
+        self._observers.append(observer)
+    
+    
+    def emit(self, event :str, data = None):
+        for observer in self._observers:
+            observer.emit(event, data)
+
+    def remove_observer(self, observer :ClientObserver):
+        self._observers.remove(observer)
+        
+
+class Client(ClientObservable):
 
     def __init__(
         self, 
@@ -35,9 +95,7 @@ class Client:
         
 
         # calling methods to init work
-        self.connect()
-
-        
+        self.connect() 
 
     def connect(self):
         try:
@@ -89,37 +147,28 @@ class Client:
         self.thread_handle_msg = Thread(target=self.handle_for_incoming_messages)
         self.thread_handle_msg.start()
 
-        # start for writting command line
-        self.thread_write_cmd = Thread(target=self.start_command_line)
-        self.thread_write_cmd.start()
+    # dispatch messages receive
+    def dispatch(self, message, receiver: tuple[str, int] = None):
 
-    def stop_command_line(self):
-        self.write_in_command_line = False
+        msg = self.translate(message)
 
-    # handling for command line
-    def start_command_line(self):
+        if msg == "quit":
+            self.send_quit_request()
 
-        self.write_in_command_line = True
-        while self.write_in_command_line:
+        elif msg == "kill-server":
+            self.request.send(self.request_factory.make_kill_server_request("For Maintenance"))
+            # self.close("[+] Quit by killing server")
+        
+        else:
 
-            data = input("[Client]> ")
-            data_lower = data.lower().strip()
-            if data_lower == "quit":
-                self.send_quit_request()
-
-            elif data_lower == "kill-server":
-                self.request.send(self.request_factory.make_kill_server_request("For Maintenance"))
-                # self.close("[+] Quit by killing server")
-            
-            else:
-                receiver = input("Receiver: ")
-
-                self.request.send(self.request_factory.make_request(
-                    REQUEST_SEND_TO_CLIENT,
-                    headers={"receiver" : (receiver.split(' '))},
-                    options={"content": data}
-                ))
-
+            self.request.send(self.request_factory.make_request(
+                REQUEST_SEND_TO_CLIENT,
+                headers={"receiver" : receiver},
+                options={"content": message}
+            ))
+    
+    def translate(self, message :str):
+        return message.strip()
 
     def stop_handle_for_incoming_msg(self):
         self.handle_messages = False
@@ -131,15 +180,16 @@ class Client:
             while self.handle_messages:
                 try:
                     response = self.request.get()
-                    print(response)
+                    #print(response)
+                    self.emit('receive', response)
 
-                    # manage all getting response by type
+                    # # manage all getting response by type
                     if response.type == RESPONSE_CLOSE_YOURSELF:
                         self.close("[+] Closing myself response by server")
 
                 except:
                     pass
-
+    
     def send_quit_request(self):
         self.request.send(self.request_factory.make_request(
             REQUEST_CLIENT_QUIT
@@ -163,11 +213,42 @@ class Client:
         self._socket.close()
         sys.exit(-1)
 
+class ClientConsole(ClientObserver):
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.client : Client = Client('user1', 'password1')
+
+        # register this observer
+        self.client.add_observer(self)
+
+        # connect signals
+        self.connect('receive', self.on_client_receive)
+
+    def on_client_receive(self, event):
+        print(event)
+
+    def start(self):
+        # start the client
+        self.client.start()
+
+        # handle for sending msg
+        while True:
+
+            msg = input("[Client]> ")
+            self.client.dispatch(msg)
+
 
 
 HOST = env('CONFIG_HOST')
 PORT = int(env('CONFIG_PORT'))
 
+if __name__ == '__main__':
 
-client = Client('user1', 'password1')
-client.start()
+    client = ClientConsole()
+
+    try:
+        client.start()
+    except KeyboardInterrupt:
+        print("[+] Keyboad interupt")
+        # sys.exit(-1)

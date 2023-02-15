@@ -53,14 +53,10 @@ class Requests:
     def from_JsonString(req: str):
         return Requests.from_dict(JSONDecoder().decode(req))
 
-
-
 class Response(Requests):
     
     def __init__(self, type: ResponseType, headers: dict = {}, options: dict = {}) -> None:
         super().__init__(type, headers, options)
-
-
 
 class RequestModel:
 
