@@ -4,6 +4,5 @@
     Here is all avaliables contants
 """
 
-
 DB_URL          = "assets/db.json"
 DB_NAME         = None
