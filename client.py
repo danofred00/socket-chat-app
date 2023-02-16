@@ -13,7 +13,9 @@ class ClientObserver:
 
     def __init__(self) -> None:
         
-        self._avaliables_events = ['receive']
+        self._avaliables_events = [
+            'receive'
+        ]
         self._connected_events = {}
 
     @property
@@ -37,7 +39,6 @@ class ClientObserver:
                 func(data, *kargs)
             else:
                 raise RuntimeError(f"Signal {event} not connected")
-
 
     def connect(self, event :str, callback : Callable, args : Collection = None) -> None:
         
@@ -73,18 +74,18 @@ class Client(ClientObservable):
 
     def __init__(
         self, 
-        username: str, 
-        password: str,
+        username: Optional[str] = None, 
+        password: Optional[str] = None,
         host_url: Optional[str] = None,
         host_port: Optional[int] = None
     ) -> None:
         # main definition of the function
         super().__init__()
 
-        self.username = username
-        self.password = password
-        self.host_url = host_url if (host_url != None) else env('CONFIG_HOST')
-        self.host_port = host_port if (host_port != None) else int(env('CONFIG_PORT'))
+        self._username = username
+        self._password = password
+        self._host_url = host_url if (host_url != None) else env('CONFIG_HOST')
+        self._host_port = host_port if (host_port != None) else int(env('CONFIG_PORT'))
 
         self._connection = None
         self._socket = None
@@ -92,52 +93,91 @@ class Client(ClientObservable):
         self.request_factory = RequestsFactory()
 
         # define attributes
-        
+        # nothing for the moments
 
-        # calling methods to init work
-        self.connect() 
+    # properties
+    @property
+    def username(self):
+        return self._username
+
+    def set_username(self, username:str):
+        self._username = username
+    
+    @property
+    def password(self):
+        return self._password
+    
+    def set_password(self, password :str):
+        self._password = password
+
+    @property
+    def host_url(self):
+        return self._host_url
+
+    def set_host_url(self, host_url):
+        self._host_url = host_url
+
+    @property
+    def host_port(self):
+        return self._host_port
+
+    def set_host_port(self, host_port):
+        self._host_port = host_port
 
     def connect(self):
         try:
             self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self._socket.connect((self.host_url, self.host_port))
             
-            # 
             #self._connection = self._socket
             self.request = RequestModel(self._socket)
 
         except ConnectionRefusedError:
             self.close(f"Unable to connect to the server {self.host_url} : {self.host_port}")
 
-    def send_data(self, data, size: int, feedback = False) -> Response | None:
+    def send_data(self, data, size: int) -> None:
         
-        return self.request.send(self.request_factory.make_simple_request(
-            options = {"content": data},
+        self.request.send(self.request_factory.make_simple_request(
+            options = {
+                "content": data
+            },
             headers = {
                 "content-size": size,
             }
-        ), feedback=feedback)
+        ))
     
     def send_auth_request(self) -> Response:
+        """
+            Send the auth request to the server
+
+            Return a Response object
+
+            RESPONSES TYPE:
+             - RESPONSE_AUTH_FAIL
+             - RESPONSE_ALREADY_ONLINE
+             - RESPONSE_AUTH_SUCCESS
+        """
         data = f"{self.username}--{self.password}"
-        return self.request.send(
-            self.request_factory.make_auth_request(options={"content": data}),
-            feedback=True
+        self.request.send(
+            self.request_factory.make_auth_request(options={"content": data})
         )
+        return self.request.get()
+        
     
     def start(self):
 
         try:
-            # trying to auth client
-            response = self.send_auth_request()
 
-            if(response.type == RESPONSE_AUTH_FAIL):
-                self.close("[-] User Authentication Error")
-            elif response.type == RESPONSE_ALREADY_ONLINE:
-                self.close("[-] User already online")
+            self.connect()
+            # trying to auth client
+            # response = self.send_auth_request()
+
+            # if(response.type == RESPONSE_AUTH_FAIL):
+            #     self.close("[-] User Authentication Error")
+            # elif response.type == RESPONSE_ALREADY_ONLINE:
+            #     self.close("[-] User already online")
 
             # start handler
-            self.handle()
         except ConnectionAbortedError:
             self.close("Connection Aborted Error")
 
@@ -184,8 +224,12 @@ class Client(ClientObservable):
                     self.emit('receive', response)
 
                     # # manage all getting response by type
-                    if response.type == RESPONSE_CLOSE_YOURSELF:
-                        self.close("[+] Closing myself response by server")
+                    # if response.type == RESPONSE_CLOSE_YOURSELF:
+                    #     self.close("[+] Closing myself response by server")
+                    # elif response.type == RESPONSE_AUTH_FAIL:
+                    #     self.close("[-] User Authentication Error")
+                    # elif response.type == RESPONSE_ALREADY_ONLINE:
+                    #     self.close("[-] User already online")
 
                 except:
                     pass
@@ -211,7 +255,7 @@ class Client(ClientObservable):
 
         # close the socket
         self._socket.close()
-        sys.exit(-1)
+        # sys.exit(-1)
 
 class ClientConsole(ClientObserver):
 

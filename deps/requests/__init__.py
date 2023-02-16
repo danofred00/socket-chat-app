@@ -74,7 +74,7 @@ class RequestModel:
     def sender_update(self, sock):
         self.sender = sock.getsockname()
 
-    def send(self, req : Requests, use_receiver = False, feedback:bool = False, sender = None, use_sock :bool = False, sock : socket = None) -> Response | None:
+    def send(self, req : Requests, use_receiver = False, sender = None, use_sock :bool = False, sock : socket = None) -> Response | None:
 
         # use another socket to send or receive data
         if use_sock and sock != None:
@@ -99,9 +99,6 @@ class RequestModel:
         print("[+] New request send : " + req.type)
 
         # to view later
-        if feedback:
-            return self.get()
-
     
     def get(self, size: int = 2048, sock : socket = None, use_sock :bool = False) -> Response:
 
