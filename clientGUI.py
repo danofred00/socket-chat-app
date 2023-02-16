@@ -95,13 +95,18 @@ class ClientGUI(ClientObserver, tk.Tk):
 
             if success:
                 self.login.destroy()
-                
+                # show the new user interface
+                self.main_ui = ClientMainUi(self.window)
+                center_window(self.window, self.main_ui.width, self.main_ui.height)
+                self.main_ui.pack()
 
         
     def on_client_receive(self, event):
         print(event)
 
-        
+    
+    def show_main_ui(self):
+        pass
 
 
 class ClientLoginUI(tk.Frame):
@@ -155,6 +160,16 @@ class ClientLoginUI(tk.Frame):
     @property
     def login_button(self) -> tk.Button:
         return self._login
+
+
+class ClientMainUi(tk.Frame):
+
+    def __init__(self, master : tk.Widget, width :int = 1200, heigth :int = 800) -> None:
+        super().__init__(master, width=width, height=heigth)
+
+        self.width = width
+        self.height = heigth
+
 
 
 if __name__ == '__main__':
