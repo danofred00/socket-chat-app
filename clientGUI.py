@@ -242,18 +242,21 @@ class ClientMainUi(tk.Frame):
 
 class _ClientChatForm(tk.Frame):
 
-    def __init__(self, master, width, height):
-        super().__init__(master, width=width, height=height)
+    def __init__(self, master, width, height, title :str):
+        super().__init__(master)
+
+        self.width = width
+        self.height = height
 
         # setup the widget
         self.setup()
 
     def setup(self):
-        self._setup_menu_bar()
+        self._setup_status()
         self._setup_canvas()
         self._setup_form()
 
-    def _setup_menu_bar(self):
+    def _setup_status_bar(self):
         pass
 
     def _setup_canvas(self):
