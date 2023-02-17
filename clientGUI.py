@@ -5,7 +5,7 @@ import tkinter.font as font
 import tkinter.ttk as ttk
 import tkinter.messagebox as msgbox
 import tkinter.dialog as dialog
-from typing import Any
+from typing import Any, Mapping
 
 from client import *
 from deps.requests import *
@@ -173,37 +173,59 @@ class ClientMainUi(tk.Frame):
 
         # setup the screen
         self.setup()
-
+        
         # events
         # to do later
     
     def on_lateral_item_selected(self, event):
-        print(self.lateral.item(event.widget.selection()))
+
+        selection = self.lateral.item(event.widget.selection())
+        title = selection['values'][0]
+
+        self.show_frame(title)
+
+        print(title)
     
     def _setup_lateral_bar(self):
         self.lateral = ttk.Treeview(self.content)
-        #self.lateral['style'] = 'app.TreeView'
+        self.lateral['style'] = 'TreeView'
         self.lateral['columns'] = ('clients')
         self.lateral.configure(height=self.height)
-        self.lateral.column('#0', width=0)
+        self.lateral.column('#0', width=0, stretch=tk.NO)
         self.lateral.heading("clients", text="Clients")
 
         # insert fake datas
-        self.lateral.insert('', tk.END, values=('Item1'))
-        self.lateral.insert('', tk.END, values=('Item2'))
-        self.lateral.insert('', tk.END, values=('Item3'))
-
+        self.items = ['Item1', 'Item2', 'Item3']
+        
+        for item in self.items:  
+            # insert element
+            self.lateral.insert('', tk.END, values=(item))
+        
         # bind selection event
         self.lateral.bind('<<TreeviewSelect>>', self.on_lateral_item_selected)
 
         # add to the main content
-        self.content.add(self.lateral)
-
+        self.content.add(self.lateral, width=290)
 
     def _setup_main_component(self):
-        self.main = tk.Frame(self.content)
 
-        self.default_main(self.main).grid(column=0, row=0, sticky='nsew', pady=200, padx=200)
+        # frame list
+        self.frames = {}
+
+        self.main = tk.Frame(self.content)
+    
+        _f = tk.Frame(self.main)
+        self.frames['main'] = _f
+        self.default_main(_f).grid(column=0, row=0, sticky='nsew', pady=200, padx=200)
+        self.frames['main'].grid(column=0, row=0, sticky='nsew')
+        for item in self.items:
+
+            frame = _ClientChatForm(self.main, title=item, width=998, height=800)
+            self.frames[item] = frame
+            self.frames[item].grid(column=0, row=0, sticky='nsew')
+        
+        self.show_frame('main')
+
         # add to the main content
         self.content.add(self.main)
     
@@ -216,11 +238,30 @@ class ClientMainUi(tk.Frame):
 
         return frame
     
+    def show_frame(self, name):
+        """
+            Display the frame set by name
+        """
+        frame = self.frames[name]
+        frame.tkraise()
+
     def _setup_style(self):
+
         style = ttk.Style()
-        style.configure('app.TreeView', font=('', 18))
-        style.configure('app.TreeView.Heading', font=('Segeo Ui', 32, font.BOLD), background="green")
-        style.layout('app.TreeView', [
+        style.theme_use('default')
+
+        style.configure('TreeView',
+            background='white',
+            foreground='black',
+            rowheight=25,
+            fieldbackground='white',
+            font=font.Font(size=18)
+        )
+
+        style.map('TreeView', background=[('selected', '#17ABEC')])
+
+        style.configure('TreeView.Heading', font=self.font_title, bg="green", border=2)
+        style.layout('TreeView', [
             ('app.TreeView.treearea', {'sticky':'nsew', 'border':10})
         ])
     
@@ -230,8 +271,8 @@ class ClientMainUi(tk.Frame):
     def setup(self):
         self.content = tk.PanedWindow(self, width=self.width, height=self.height)
         # setup the style
-        self._setup_style()
-        self._setup_fonts()        
+        self._setup_fonts()
+        self._setup_style()        
         self._setup_lateral_bar()
         self._setup_main_component()
         self.content.pack(fill=tk.BOTH)
@@ -242,22 +283,25 @@ class ClientMainUi(tk.Frame):
 
 class _ClientChatForm(tk.Frame):
 
-    def __init__(self, master, width, height, title :str):
+    def __init__(self, master, width = 982, height = 800, title :str = None):
         super().__init__(master)
 
         self.width = width
         self.height = height
+        self.title = title
 
         # setup the widget
         self.setup()
 
     def setup(self):
-        self._setup_status()
+        self._setup_status_bar()
         self._setup_canvas()
         self._setup_form()
 
     def _setup_status_bar(self):
-        pass
+        frame = tk.Frame(self, bg='#8E8888')
+        tk.Label(frame, text=self.title).pack()
+        frame.place(relwidth=self.width, relheight=80, relx=0, rely=0)
 
     def _setup_canvas(self):
         pass
