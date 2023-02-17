@@ -164,15 +164,32 @@ class ClientLoginUI(tk.Frame):
 
 class ClientMainUi(tk.Frame):
 
-    def __init__(self, master : tk.Widget, width :int = 1200, heigth :int = 800) -> None:
-        super().__init__(master, width=width, height=heigth)
+    def __init__(self, master : tk.Widget, width :int = 1200, height :int = 800) -> None:
+        super().__init__(master, width=width, height=height)
 
         self.width = width
-        self.height = heigth
-
+        self.height = height
 
 
 if __name__ == '__main__':
 
-    client = ClientGUI()
-    client.start()
+    # from ui.listview import *
+
+    # class Delegate(ListItemDelegate):
+    #     def __init__(self, master, object) -> None:
+    #         super().__init__(master, object)
+        
+    #     def delegate(self) -> Widget:
+    #         return tk.Label(self.master, text=self.item)
+
+    # root = tk.Tk()
+    # client = ClientMainUi(root)
+    # center_window(root, client.width, client.height)
+    
+    # listview = ListView(root, ListModel(['hello','hi','pack']))
+    # listview.set_delegate(Delegate)
+
+    # listview.pack()
+    # client.pack()    
+    # root.mainloop()
+    pass
