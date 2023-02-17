@@ -24,25 +24,27 @@ class Observable:
         self.observers.remove(o)
 
     def update_observers(self, object):
+
         for obs in self.observers:
             obs.update(object)
+            
 
 
 class ListModel(Observable):
     
     def __init__(self, model = []) -> None:
-        
+        super().__init__()
         self._model : list = model
-        self._observers = []
-        
     
-    def add(self, item: Any) -> None:
-        self._model.insert(-1, item)
+    def append(self, item: Any) -> None:
+        self.insert(len(self._model), item)
 
     def insert(self, index :int, item) -> None:
+        print("inserted")
         self._model.insert(index, item)
         # notify observers
         self.update_observers(self)
+        
     
     def remove(self, index :int) -> None:
         if index >= len(self._model):
@@ -97,19 +99,31 @@ class ListView(Frame, Observer, Pack, XView, YView):
         self._delegate = delegate
 
     def _setup_model(self):
-        self._model.add_observer(self)
+        self.model.add_observer(self)
     
-    def update(self, object) -> None:
+    def update(self, object):
         self.set_model(object)
+        self._refresh()
 
     def _show_items(self):
 
-        for elt in self._model._model:
-            
-            print(elt)
+        self.items = []
+
+        for elt in self.model._model:
             item = self.delegate(self.content, elt)
+            self.items.append(item)
             item.pack()
+            print(self.items)
     
+    def _destroy_items(self):
+        
+        for item in self.items:
+            item.destroy()
+
+    def _refresh(self):
+        self._destroy_items()
+        self._show_items()
+
     def pack(self):
         self._show_items()
         super().pack()

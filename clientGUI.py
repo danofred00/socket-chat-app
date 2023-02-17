@@ -173,23 +173,9 @@ class ClientMainUi(tk.Frame):
 
 if __name__ == '__main__':
 
-    # from ui.listview import *
+    root = tk.Tk()
+    client = ClientMainUi(root)
+    center_window(root, client.width, client.height)
 
-    # class Delegate(ListItemDelegate):
-    #     def __init__(self, master, object) -> None:
-    #         super().__init__(master, object)
-        
-    #     def delegate(self) -> Widget:
-    #         return tk.Label(self.master, text=self.item)
-
-    # root = tk.Tk()
-    # client = ClientMainUi(root)
-    # center_window(root, client.width, client.height)
+    root.mainloop()
     
-    # listview = ListView(root, ListModel(['hello','hi','pack']))
-    # listview.set_delegate(Delegate)
-
-    # listview.pack()
-    # client.pack()    
-    # root.mainloop()
-    pass
