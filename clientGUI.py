@@ -173,7 +173,7 @@ class ClientMainUi(tk.Frame):
 
         # setup the screen
         self.setup()
-        
+
         # events
         # to do later
     
@@ -203,8 +203,18 @@ class ClientMainUi(tk.Frame):
     def _setup_main_component(self):
         self.main = tk.Frame(self.content)
 
+        self.default_main(self.main).grid(column=0, row=0, sticky='nsew', pady=200, padx=200)
         # add to the main content
         self.content.add(self.main)
+    
+    def default_main(self, master) -> tk.Frame:
+        frame = tk.Frame(master, background='#302F2F')
+
+        # add something inside here
+        tk.Label(frame, font=self.font_title, text='Socket Chat App').pack()
+        tk.Label(frame, text='By @Danofred').pack()
+
+        return frame
     
     def _setup_style(self):
         style = ttk.Style()
@@ -213,19 +223,44 @@ class ClientMainUi(tk.Frame):
         style.layout('app.TreeView', [
             ('app.TreeView.treearea', {'sticky':'nsew', 'border':10})
         ])
+    
+    def _setup_fonts(self):
+        self.font_title = font.Font(family='Comic sans ms', size=48, weight=font.BOLD)
 
     def setup(self):
         self.content = tk.PanedWindow(self, width=self.width, height=self.height)
         # setup the style
         self._setup_style()
-        
+        self._setup_fonts()        
         self._setup_lateral_bar()
         self._setup_main_component()
-        self.content.pack()
+        self.content.pack(fill=tk.BOTH)
 
 
     def pack(self):
         super().pack()
+
+class _ClientChatForm(tk.Frame):
+
+    def __init__(self, master, width, height):
+        super().__init__(master, width=width, height=height)
+
+        # setup the widget
+        self.setup()
+
+    def setup(self):
+        self._setup_menu_bar()
+        self._setup_canvas()
+        self._setup_form()
+
+    def _setup_menu_bar(self):
+        pass
+
+    def _setup_canvas(self):
+        pass
+
+    def _setup_form(self):
+        pass
 
 
 if __name__ == '__main__':
