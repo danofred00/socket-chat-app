@@ -5,6 +5,7 @@ import tkinter.font as font
 import tkinter.ttk as ttk
 import tkinter.messagebox as msgbox
 import tkinter.dialog as dialog
+from typing import Any
 
 from client import *
 from deps.requests import *
@@ -170,12 +171,68 @@ class ClientMainUi(tk.Frame):
         self.width = width
         self.height = height
 
+        # setup the screen
+        self.setup()
+        
+        # events
+        # to do later
+    
+    def on_lateral_item_selected(self, event):
+        print(self.lateral.item(event.widget.selection()))
+    
+    def _setup_lateral_bar(self):
+        self.lateral = ttk.Treeview(self.content)
+        #self.lateral['style'] = 'app.TreeView'
+        self.lateral['columns'] = ('clients')
+        self.lateral.configure(height=self.height)
+        self.lateral.column('#0', width=0)
+        self.lateral.heading("clients", text="Clients")
+
+        # insert fake datas
+        self.lateral.insert('', tk.END, values=('Item1'))
+        self.lateral.insert('', tk.END, values=('Item2'))
+        self.lateral.insert('', tk.END, values=('Item3'))
+
+        # bind selection event
+        self.lateral.bind('<<TreeviewSelect>>', self.on_lateral_item_selected)
+
+        # add to the main content
+        self.content.add(self.lateral)
+
+
+    def _setup_main_component(self):
+        self.main = tk.Frame(self.content)
+
+        # add to the main content
+        self.content.add(self.main)
+    
+    def _setup_style(self):
+        style = ttk.Style()
+        style.configure('app.TreeView', font=('', 18))
+        style.configure('app.TreeView.Heading', font=('Segeo Ui', 32, font.BOLD), background="green")
+        style.layout('app.TreeView', [
+            ('app.TreeView.treearea', {'sticky':'nsew', 'border':10})
+        ])
+
+    def setup(self):
+        self.content = tk.PanedWindow(self, width=self.width, height=self.height)
+        # setup the style
+        self._setup_style()
+        
+        self._setup_lateral_bar()
+        self._setup_main_component()
+        self.content.pack()
+
+
+    def pack(self):
+        super().pack()
+
 
 if __name__ == '__main__':
 
     root = tk.Tk()
     client = ClientMainUi(root)
     center_window(root, client.width, client.height)
-
+    client.pack()
     root.mainloop()
     
