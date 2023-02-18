@@ -74,8 +74,10 @@ class Server():
 
                     # notify users
                     # get connection by addr
+                    conn = self.connections.get_connection_by_addr(addr)
+                    user = (conn.user.username, addr)
                     # make user info
-                    self._notify_connection(user=addr)
+                    self._notify_connection(user=user)
                     
                 except:
                     print("[+] Exception in handle_client_connection")
