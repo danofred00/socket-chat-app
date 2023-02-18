@@ -9,16 +9,16 @@ from socket import socket
 class Requests:
 
     """
-        Request class
+        REQUEST CLASS
 
-        - headers
-        content-type
-        content-size
-        (sender, sender_port)
-        (receiver, receiver_port)
+        HEADERS
+            - content-type
+            - content-size
+            - (sender, sender_port)
+            - (receiver, receiver_port)
 
-        - options
-        content
+        OPTIONS
+            - content
     """
 
     def __init__(self, type: RequestType, headers: dict = {}, options: dict = {}) -> None:

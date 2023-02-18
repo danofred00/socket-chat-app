@@ -123,7 +123,10 @@ class ClientGUI(ClientObserver):
             # update items list
             # self.main_ui.set_items(clients)
             # show the main ui
-            self.show_main_ui(items=clients, user=current) 
+            self.show_main_ui(items=clients, user=current)
+        
+        elif event.type == RESPONSE_CLIENT_CONNECT:
+            print('[+] New user connected')
 
 
     def show_main_ui(self, items, user):
@@ -219,6 +222,12 @@ class ClientMainUi(tk.Frame):
         title = selection['values'][0]
         self.show_frame(title)
     
+    def _lateral_insert(self, value, callback : Optional[Callable]):
+        
+        self.lateral.insert('', tk.END, values=(value))
+        if callback != None:
+            callback()
+
     def _setup_lateral_bar(self):
         self.lateral = ttk.Treeview(self.content)
         self.lateral['style'] = 'TreeView'
@@ -229,11 +238,11 @@ class ClientMainUi(tk.Frame):
 
         # insert fake datas
         # self.items = ['Item1', 'Item2', 'Item3']
-        
+
         for item in self._items:  
             # insert element
             # item here is a user
-            self.lateral.insert('', tk.END, values=(item['username']))
+            self._lateral_insert(item['username'], None)
         
         # bind selection event
         self.lateral.bind('<<TreeviewSelect>>', self.on_lateral_item_selected)
@@ -247,29 +256,36 @@ class ClientMainUi(tk.Frame):
         self.frames = {}
 
         self.main = tk.Frame(self.content)
-    
+
+        # put a main frame inside the stack
         _f = tk.Frame(self.main)
         self.frames['main'] = _f
         self.default_main(_f).grid(column=0, row=0, sticky='nsew', pady=200, padx=200)
         self.frames['main'].grid(column=0, row=0, sticky='nsew')
-        for item in self.items:
-
-            username = item['username']
-
-            frame = _ClientChatForm(
-                self.main,
-                user=self._user,
-                receiver=item,
-                title=username
-            )
-            self.frames[username] = frame
-            self.frames[username].grid(column=0, row=0, sticky='nsew')
         
+        # adding others items
+        for item in self.items:
+            # create a new frame for client
+            self._create_clientChatForm(item)
+
+            
         self.show_frame('main')
 
         # add to the main content
         self.content.add(self.main)
     
+    def _create_clientChatForm(self, item):
+        
+        username = item['username']
+        frame = _ClientChatForm(
+                self.main,
+                user=self._user,
+                receiver=item,
+                title=username
+            )
+        self.frames[username] = frame
+        self.frames[username].grid(column=0, row=0, sticky='nsew')
+
     def default_main(self, master) -> tk.Frame:
         frame = tk.Frame(master, background='#302F2F')
 
@@ -454,6 +470,7 @@ class _ClientChatForm(tk.Frame):
 
         frame.grid(column=0, row=2, sticky='nsew')
 
+##############################
 from math import ceil
 
 def get_str_size_by_limit(s :str, limit :int = 20) -> tuple[int, int]:

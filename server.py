@@ -71,8 +71,14 @@ class Server():
                     # handle for incoming clients messages
                     self.thread_handle_msg = threading.Thread(target=self.handle_for_incoming_messages, args=[self._connection])
                     self.thread_handle_msg.start()
+
+                    # notify users
+                    # get connection by addr
+                    # make user info
+                    self._notify_connection(user=addr)
+                    
                 except:
-                    print("[+] Exception")
+                    print("[+] Exception in handle_client_connection")
 
 
     def stop_handling_for_clients_connections(self):
@@ -210,14 +216,39 @@ class Server():
             return res
 
     
-    def send_data(self, data, size: int, feedback = False) -> Response | None:
+    # def send_data(self, data, size: int, feedback = False) -> Response | None:
         
-        return self.request.send(self.request_factory.make_simple_request(
-            options = {"content": data},
-            headers = {
-                "content-size": size,
-            }
-        ), feedback=feedback)
+    #     return self.request.send(self.request_factory.make_simple_request(
+    #         options = {"content": data},
+    #         headers = {
+    #             "content-size": size,
+    #         }
+    #     ), feedback=feedback)
+
+    def _notify_connection(self, user):
+        """
+            Function called when a new user is connected to the server
+
+            PARAMS
+                user - represent the user connected informations (name, addr)
+        """
+
+        # notify users for the new connection
+        self.send_all(self.request_factory.make_request(
+                RESPONSE_CLIENT_CONNECT,
+                options={'content' : user}
+            ))
+
+    def send_all(self, data):
+
+        print('[+] send all start')
+
+        connections = self.connections.get_all()
+
+        print(connections)
+
+        for connection in connections:
+            self.request.send(data, use_sock=True, sock=connection.sock)
     
 
     def close(self, reason :str = None):
