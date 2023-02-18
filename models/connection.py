@@ -10,6 +10,9 @@ class Connection:
         self.user = user
         self.sock = sock
         self.addr = (host, port)
+    
+    def __str__(self) -> str:
+        return f'User<{self.user.username}, {self.addr}>'
         
 
 class ConnectionModel:

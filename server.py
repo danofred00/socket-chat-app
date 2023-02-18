@@ -74,14 +74,13 @@ class Server():
 
                     # notify users
                     # get connection by addr
-                    conn = self.connections.get_connection_by_addr(addr)
+                    conn = self.connections.get_connection_by_addr(*addr)
                     user = (conn.user.username, addr)
                     # make user info
                     self._notify_connection(user=user)
                     
                 except:
                     print("[+] Exception in handle_client_connection")
-
 
     def stop_handling_for_clients_connections(self):
         self.handle_connections = False
@@ -243,12 +242,7 @@ class Server():
 
     def send_all(self, data):
 
-        print('[+] send all start')
-
         connections = self.connections.get_all()
-
-        print(connections)
-
         for connection in connections:
             self.request.send(data, use_sock=True, sock=connection.sock)
     

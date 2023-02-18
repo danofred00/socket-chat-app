@@ -126,8 +126,21 @@ class ClientGUI(ClientObserver):
             self.show_main_ui(items=clients, user=current)
         
         elif event.type == RESPONSE_CLIENT_CONNECT:
-            print('[+] New user connected')
 
+            # get user about
+            # user = (username, addr)
+            user = event.option['content']
+            print('[+] New user connected %s' % user[0])
+
+            # We do action only if the notified user is not the last connected
+            if user[0] != self.client.username:
+                # We make a new _ClientChatForm for new user
+                self.main_ui._lateral_insert(
+                    user[0], 
+                    self.main_ui._create_clientChatForm,
+                    user={'username':user[0], 'addr':tuple(user[1])}
+                )
+                
 
     def show_main_ui(self, items, user):
         # show the new user interface
@@ -222,11 +235,11 @@ class ClientMainUi(tk.Frame):
         title = selection['values'][0]
         self.show_frame(title)
     
-    def _lateral_insert(self, value, callback : Optional[Callable]):
+    def _lateral_insert(self, value, callback : Optional[Callable], *kwargs):
         
         self.lateral.insert('', tk.END, values=(value))
         if callback != None:
-            callback()
+            callback(*kwargs)
 
     def _setup_lateral_bar(self):
         self.lateral = ttk.Treeview(self.content)
