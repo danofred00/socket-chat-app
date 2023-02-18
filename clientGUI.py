@@ -109,7 +109,6 @@ class ClientGUI(ClientObserver, tk.Tk):
     def show_main_ui(self):
         pass
 
-
 class ClientLoginUI(tk.Frame):
 
     def __init__(self, master: tk.Misc | None = ..., width = 500, heigth = 500) -> None:
@@ -161,7 +160,6 @@ class ClientLoginUI(tk.Frame):
     @property
     def login_button(self) -> tk.Button:
         return self._login
-
 
 class ClientMainUi(tk.Frame):
 
@@ -220,11 +218,11 @@ class ClientMainUi(tk.Frame):
         self.frames['main'].grid(column=0, row=0, sticky='nsew')
         for item in self.items:
 
-            frame = _ClientChatForm(self.main, title=item, width=998, height=800)
+            frame = _ClientChatForm(self.main, title=item)
             self.frames[item] = frame
             self.frames[item].grid(column=0, row=0, sticky='nsew')
         
-        self.show_frame('main')
+        self.show_frame('Item1')
 
         # add to the main content
         self.content.add(self.main)
@@ -278,12 +276,9 @@ class ClientMainUi(tk.Frame):
         self.content.pack(fill=tk.BOTH)
 
 
-    def pack(self):
-        super().pack()
-
 class _ClientChatForm(tk.Frame):
 
-    def __init__(self, master, width = 982, height = 800, title :str = None):
+    def __init__(self, master, width = 998, height = 800, title :str = None):
         super().__init__(master)
 
         self.width = width
@@ -294,21 +289,130 @@ class _ClientChatForm(tk.Frame):
         self.setup()
 
     def setup(self):
+        self._setup_font()
         self._setup_status_bar()
         self._setup_canvas()
         self._setup_form()
 
     def _setup_status_bar(self):
         frame = tk.Frame(self, bg='#8E8888')
-        tk.Label(frame, text=self.title).pack()
-        frame.place(relwidth=self.width, relheight=80, relx=0, rely=0)
+        tk.Label(frame, text=self.title.title(), font=self.font_title).pack(side=tk.LEFT)
+        frame.pack(fill=tk.X)
+    
+    def _setup_font(self):
+
+        DEFAULT_FAMILLY = 'comic sans ms'
+
+        self.font_title = font.Font(family=DEFAULT_FAMILLY, size=20, weight=font.BOLD)
+        self.font_message_user = font.Font(family=DEFAULT_FAMILLY, size=16, weight=font.BOLD)
+        self.font_message_content = font.Font(family=DEFAULT_FAMILLY, size=18, weight=font.NORMAL)
 
     def _setup_canvas(self):
-        pass
+
+        frame = tk.Frame(self)
+        self.canvas = tk.Canvas(frame, background='#8E8888')
+        self.cv_yScrollbar = tk.Scrollbar(frame, orient=tk.VERTICAL)
+
+        # configure it
+        self.canvas.configure(height=625, width=885)
+        self.cv_yScrollbar.configure(command=self.canvas.yview)
+
+        # setup the default position to start sending message
+        self.current_x, self.current_y = 10, 10
+
+        # setup the scrollbar
+        self.cv_yScrollbar.pack(side=tk.RIGHT)
+        self.canvas.pack(side=tk.LEFT)
+        
+        frame.pack(side=tk.LEFT)
+
+    def canvas_draw_message(self, title:str, message:str, bg_color = 'green'):
+
+        canvas = self.canvas
+        CHAR_WIDTH = 15
+        CHAR_HEIGHT = 40
+        MESSAGE_MARGIN_BOTTOM = 30
+
+        # create a container to store message
+        width, height = get_str_size_by_limit(message)
+        
+        # getting coords
+        x1, y1 = self.current_x, self.current_y
+        x2, y2 = x1+(width*CHAR_WIDTH), y1+((height+1)*CHAR_HEIGHT) 
+        
+        # draw the rectangle
+        container = self.canvas_create_rounded_rectangle(
+            canvas, 
+            x1, y1, x2, y2, radius=50,
+            fill=bg_color
+        )
+
+        # draw a username
+        username_x, username_y = x1+(len(title)*10), y1+15
+        canvas.create_text(username_x, username_y, text=title, font=self.font_message_user)
+
+        # draw a line
+        line_y = username_y + 10
+        canvas.create_line(x1, line_y, x1+(width*CHAR_WIDTH), line_y)
+        
+        # draw a message content
+        content_x = x1 + (width*6)
+        content_y = y1+(height*CHAR_HEIGHT)
+        canvas.create_text(content_x, content_y, text=format_str_with_limit(message, limit=20), font=self.font_message_content)
+
+        # prepare position for the next message
+        self.current_y = y2 + MESSAGE_MARGIN_BOTTOM
+
+    def canvas_create_rounded_rectangle(self, canvas, x1, y1, x2, y2, radius=30, **kwargs) :
+        """
+            Draw a rounded rect at the specified position
+
+            CREDIT
+                - stackoverflow
+        """        
+        points = [
+            x1+radius, y1,
+            x2-radius, y1,
+            x2, y1,
+            x2, y1+radius,
+            x2, y2-radius,
+            x2, y2,
+            x2-radius, y2,
+            x1+radius, y2,
+            x1, y2,
+            x1, y2-radius,
+            x1, y1+radius,
+            x1, y1
+        ]
+
+        return canvas.create_polygon(points, **kwargs, smooth=True)
 
     def _setup_form(self):
         pass
 
+
+from math import ceil
+
+def get_str_size_by_limit(s :str, limit :int = 20) -> tuple[int, int]:
+    
+    """
+        RETURN 
+            (width, height) of the given string s
+    """
+    width = (len(s), limit)[len(s)>limit]
+    return (width, ceil(len(s) / limit))
+
+def format_str_with_limit(s :str, limit :int, limiter='\n') -> str:
+
+    _s = ''
+    i = 0
+    for c in s:
+        _s += c
+        i += 1
+        if i == limit:
+            i = 0
+            _s += limiter
+    return _s
 
 if __name__ == '__main__':
 
