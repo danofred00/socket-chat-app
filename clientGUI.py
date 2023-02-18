@@ -94,18 +94,21 @@ class ClientGUI(ClientObserver, tk.Tk):
 
             if success:
                 self.login.destroy()
-                # show the new user interface
-                self.main_ui = ClientMainUi(self.window)
-                center_window(self.window, self.main_ui.width, self.main_ui.height)
-                self.main_ui.pack()
+                self.show_main_ui()                
 
         
     def on_client_receive(self, event):
+        """
+            Actions doing when messages are received
+        """
         print(event)
 
     
     def show_main_ui(self):
-        pass
+        # show the new user interface
+        self.main_ui = ClientMainUi(self.window)
+        center_window(self.window, self.main_ui.width, self.main_ui.height)
+        self.main_ui.pack()
 
 class ClientLoginUI(tk.Frame):
 
@@ -191,7 +194,7 @@ class ClientMainUi(tk.Frame):
         self.lateral.heading("clients", text="Clients")
 
         # insert fake datas
-        self.items = ['Item1', 'Item2', 'Item3']
+        # self.items = ['Item1', 'Item2', 'Item3']
         
         for item in self.items:  
             # insert element
@@ -220,7 +223,7 @@ class ClientMainUi(tk.Frame):
             self.frames[item] = frame
             self.frames[item].grid(column=0, row=0, sticky='nsew')
         
-        self.show_frame('Item1')
+        self.show_frame('main')
 
         # add to the main content
         self.content.add(self.main)
@@ -273,7 +276,6 @@ class ClientMainUi(tk.Frame):
         self._setup_main_component()
         self.content.pack(fill=tk.BOTH)
 
-
 class _ClientChatForm(tk.Frame):
 
     def __init__(self, master, width = 998, height = 800, title :str = None):
@@ -294,7 +296,7 @@ class _ClientChatForm(tk.Frame):
 
     def _setup_status_bar(self):
         frame = tk.Frame(self, bg='#8E8888')
-        tk.Label(frame, text=self.title.title(), font=self.font_title).pack(side=tk.LEFT)
+        tk.Label(frame, text=self.title.title(), font=self.font_title, bg='#8E8888').pack(side=tk.LEFT)
         frame.grid(column=0, row=0, sticky='nsew')
     
     def _setup_font(self):
