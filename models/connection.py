@@ -44,6 +44,9 @@ class ConnectionModel:
         conn = self.get_connection_by_addr(*addr)
         self.connections.remove(conn)
 
+    def get_all(self) -> list[Connection]:
+        return self.connections
+
     #
     def exists_user_connection(self, user :str) -> bool :
 

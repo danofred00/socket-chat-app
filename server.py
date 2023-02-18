@@ -128,6 +128,13 @@ class Server():
             elif response.type == REQUEST_STOP_SERVER:
                 self.close("[+] Kill server by user request : " + REQUEST_STOP_SERVER)
 
+            elif response.type == REQUEST_GET_ALL_CLIENTS:
+                pass
+    
+    def _get_all_clients(self):
+        
+        pass
+
 
     def init_server(self):
 
