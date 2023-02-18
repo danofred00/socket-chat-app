@@ -18,8 +18,6 @@ def center_window(window :tk.Tk, width:int, heigth:int):
     x = window.winfo_screenwidth()
     y = window.winfo_screenheight()
 
-    print(x, y)
-
     # get the center
     x = (x/2) - (width/2)
     y = (y/2) - (heigth/2)
@@ -169,6 +167,9 @@ class ClientMainUi(tk.Frame):
         self.width = width
         self.height = height
 
+        ##
+        self.items = []
+
         # setup the screen
         self.setup()
         
@@ -179,10 +180,7 @@ class ClientMainUi(tk.Frame):
 
         selection = self.lateral.item(event.widget.selection())
         title = selection['values'][0]
-
         self.show_frame(title)
-
-        print(title)
     
     def _setup_lateral_bar(self):
         self.lateral = ttk.Treeview(self.content)
@@ -297,7 +295,7 @@ class _ClientChatForm(tk.Frame):
     def _setup_status_bar(self):
         frame = tk.Frame(self, bg='#8E8888')
         tk.Label(frame, text=self.title.title(), font=self.font_title).pack(side=tk.LEFT)
-        frame.pack(fill=tk.X)
+        frame.grid(column=0, row=0, sticky='nsew')
     
     def _setup_font(self):
 
@@ -324,7 +322,7 @@ class _ClientChatForm(tk.Frame):
         self.cv_yScrollbar.pack(side=tk.RIGHT)
         self.canvas.pack(side=tk.LEFT)
         
-        frame.pack(side=tk.LEFT)
+        frame.grid(column=0, row=1, sticky='nsew')
 
     def canvas_draw_message(self, title:str, message:str, bg_color = 'green'):
 
@@ -388,8 +386,17 @@ class _ClientChatForm(tk.Frame):
         return canvas.create_polygon(points, **kwargs, smooth=True)
 
     def _setup_form(self):
-        pass
+        
+        from tkinter.scrolledtext import ScrolledText
 
+        frame = tk.Frame(self)
+        self.text_edit = ScrolledText(frame, width=100, height=5)
+        self.btn_send = tk.Button(frame, text="Envoyer")
+        
+        self.text_edit.grid(column=0, row=0, rowspan=3)
+        self.btn_send.grid(column=1, row=1, padx=5)
+
+        frame.grid(column=0, row=2, sticky='nsew')
 
 from math import ceil
 
