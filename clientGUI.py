@@ -112,15 +112,23 @@ class ClientGUI(ClientObserver):
         if event.type == RESPONSE_GET_ALL_CLIENTS:
             # we decode content
             clients = event.options['content']
+            
+            # remove info for the current user
+            for client in clients:
+                if client['username'] == self.client.username:
+                    current = client
+                    clients.remove(client)
+                    break
+
             # update items list
             # self.main_ui.set_items(clients)
             # show the main ui
-            self.show_main_ui(clients) 
+            self.show_main_ui(items=clients, user=current) 
 
 
-    def show_main_ui(self, items):
+    def show_main_ui(self, items, user):
         # show the new user interface
-        self.main_ui = ClientMainUi(self.window, items=items)
+        self.main_ui = ClientMainUi(self.window, items=items, user=user)
         center_window(self.window, self.main_ui.width, self.main_ui.height)
         self.main_ui.pack()
 
@@ -178,7 +186,11 @@ class ClientLoginUI(tk.Frame):
 
 class ClientMainUi(tk.Frame):
 
-    def __init__(self, master : tk.Widget, width :int = 1200, height :int = 800, items: Optional[Collection] = None) -> None:
+    def __init__(self, 
+                 master : tk.Widget, user, 
+                 width :int = 1200, height :int = 800, 
+                 items: Optional[Collection] = None
+                ) -> None:
         super().__init__(master, width=width, height=height)
 
         self.width = width
@@ -186,6 +198,7 @@ class ClientMainUi(tk.Frame):
 
         ##
         self._items = items
+        self._user = user
 
         # setup the screen
         self.setup()
@@ -243,7 +256,12 @@ class ClientMainUi(tk.Frame):
 
             username = item['username']
 
-            frame = _ClientChatForm(self.main, title=username)
+            frame = _ClientChatForm(
+                self.main,
+                user=self._user,
+                receiver=item,
+                title=username
+            )
             self.frames[username] = frame
             self.frames[username].grid(column=0, row=0, sticky='nsew')
         
@@ -302,10 +320,15 @@ class ClientMainUi(tk.Frame):
 
 class _ClientChatForm(tk.Frame):
 
-    def __init__(self, master,  
-                 width = 998, height = 800,
+    def __init__(self, master, 
+                 user , receiver,
+                 width :int = 998, height :int = 800,
                  title :str = None
                 ):
+        """
+            PARAMS
+                - receiver : (username, (host, port))
+        """
         super().__init__(master)
 
         self.width = width
@@ -313,6 +336,8 @@ class _ClientChatForm(tk.Frame):
         self.title = title
 
         # some properties
+        self._user = user
+        self._receiver = receiver
 
         # setup the widget
         self.setup()
