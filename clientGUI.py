@@ -25,7 +25,7 @@ def center_window(window :tk.Tk, width:int, heigth:int):
     # center the window
     window.wm_geometry("%dx%d+%d+%d" % (width, heigth, x, y))
 
-class ClientGUI(ClientObserver, tk.Tk):
+class ClientGUI(ClientObserver):
 
     def __init__(self) -> None:
         super().__init__()
@@ -51,7 +51,7 @@ class ClientGUI(ClientObserver, tk.Tk):
         self.connect_signals()
 
         # create login ui
-        self.create_login_ui(self.window)
+        self._create_login_ui(self.window)
         center_window(self.window, self.login.width, self.login.heigth)
 
         # show the window
@@ -61,7 +61,7 @@ class ClientGUI(ClientObserver, tk.Tk):
         self.client.close("[+] Close the Window")
         self.window.quit()
 
-    def create_login_ui(self, master) -> None:
+    def _create_login_ui(self, master) -> None:
         
         self.login = ClientLoginUI(master)
         
@@ -72,14 +72,14 @@ class ClientGUI(ClientObserver, tk.Tk):
     def on_loginBtn_clicked(self, username, password):
         
         # start the client
-        self.client.connect()
+        self.client.start()
 
         self.client.set_username(username)
         self.client.set_password(password)
         
         response = self.client.send_auth_request()
         # just for debug
-        print(response)
+        # print(response)
 
         # check if success
         if response.type == RESPONSE_AUTH_FAIL:
@@ -94,19 +94,33 @@ class ClientGUI(ClientObserver, tk.Tk):
 
             if success:
                 self.login.destroy()
-                self.show_main_ui()                
 
-        
-    def on_client_receive(self, event):
+                # start client handling
+                self.client.handle()
+
+                # get all clients
+                self._request_get_clients()               
+
+    def _request_get_clients(self):
+        self.client._send_get_clients_request()
+
+    def on_client_receive(self, event, data = None):
         """
             Actions doing when messages are received
         """
-        print(event)
+        print('receive data')
+        if event.type == RESPONSE_GET_ALL_CLIENTS:
+            # we decode content
+            clients = event.options['content']
+            # update items list
+            # self.main_ui.set_items(clients)
+            # show the main ui
+            self.show_main_ui(clients) 
 
-    
-    def show_main_ui(self):
+
+    def show_main_ui(self, items):
         # show the new user interface
-        self.main_ui = ClientMainUi(self.window)
+        self.main_ui = ClientMainUi(self.window, items=items)
         center_window(self.window, self.main_ui.width, self.main_ui.height)
         self.main_ui.pack()
 
@@ -164,14 +178,14 @@ class ClientLoginUI(tk.Frame):
 
 class ClientMainUi(tk.Frame):
 
-    def __init__(self, master : tk.Widget, width :int = 1200, height :int = 800) -> None:
+    def __init__(self, master : tk.Widget, width :int = 1200, height :int = 800, items: Optional[Collection] = None) -> None:
         super().__init__(master, width=width, height=height)
 
         self.width = width
         self.height = height
 
         ##
-        self.items = []
+        self._items = items
 
         # setup the screen
         self.setup()
@@ -179,6 +193,13 @@ class ClientMainUi(tk.Frame):
         # events
         # to do later
     
+    @property
+    def items(self):
+        return self._items
+
+    def set_items(self, items :Any):
+        self._items = items
+
     def on_lateral_item_selected(self, event):
 
         selection = self.lateral.item(event.widget.selection())
@@ -196,9 +217,10 @@ class ClientMainUi(tk.Frame):
         # insert fake datas
         # self.items = ['Item1', 'Item2', 'Item3']
         
-        for item in self.items:  
+        for item in self._items:  
             # insert element
-            self.lateral.insert('', tk.END, values=(item))
+            # item here is a user
+            self.lateral.insert('', tk.END, values=(item['username']))
         
         # bind selection event
         self.lateral.bind('<<TreeviewSelect>>', self.on_lateral_item_selected)
@@ -219,9 +241,11 @@ class ClientMainUi(tk.Frame):
         self.frames['main'].grid(column=0, row=0, sticky='nsew')
         for item in self.items:
 
-            frame = _ClientChatForm(self.main, title=item)
-            self.frames[item] = frame
-            self.frames[item].grid(column=0, row=0, sticky='nsew')
+            username = item['username']
+
+            frame = _ClientChatForm(self.main, title=username)
+            self.frames[username] = frame
+            self.frames[username].grid(column=0, row=0, sticky='nsew')
         
         self.show_frame('main')
 
@@ -278,12 +302,17 @@ class ClientMainUi(tk.Frame):
 
 class _ClientChatForm(tk.Frame):
 
-    def __init__(self, master, width = 998, height = 800, title :str = None):
+    def __init__(self, master,  
+                 width = 998, height = 800,
+                 title :str = None
+                ):
         super().__init__(master)
 
         self.width = width
         self.height = height
         self.title = title
+
+        # some properties
 
         # setup the widget
         self.setup()
@@ -425,9 +454,6 @@ def format_str_with_limit(s :str, limit :int, limiter='\n') -> str:
 
 if __name__ == '__main__':
 
-    root = tk.Tk()
-    client = ClientMainUi(root)
-    center_window(root, client.width, client.height)
-    client.pack()
-    root.mainloop()
+    client = ClientGUI()
+    client.start()
     

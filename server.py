@@ -129,12 +129,20 @@ class Server():
                 self.close("[+] Kill server by user request : " + REQUEST_STOP_SERVER)
 
             elif response.type == REQUEST_GET_ALL_CLIENTS:
-                pass
+                
+                self.request.send(self.request_factory.make_request(
+                    RESPONSE_GET_ALL_CLIENTS,
+                    options={'content':self._get_all_clients()}
+                ), use_sock=True, sock=conn)
     
     def _get_all_clients(self):
         
-        pass
-
+        clients = []
+        for conn in self.connections.get_all():
+            client = {'username': conn.user.username, 'addr':conn.addr}
+            clients.append(client)
+        
+        return clients
 
     def init_server(self):
 

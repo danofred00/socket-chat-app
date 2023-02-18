@@ -110,7 +110,7 @@ class RequestModel:
         # format response
         response = Requests.from_JsonString(data.decode("UTF-8").strip())
         print(f"[+] New response from {response.headers}:" + response.type)
-        
+
         return response
 
 class RequestsFactory:

@@ -31,12 +31,13 @@ class ClientObserver:
         if event in self._avaliables_events:
             
             if event in self._connected_events.keys():
+
                 e = self._connected_events[event]
                 func = e['callback']
-                kargs = e['args']
+                args = e['args']
 
                 # calling the function
-                func(data, *kargs)
+                func(data, args)
             else:
                 raise RuntimeError(f"Signal {event} not connected")
 
@@ -237,6 +238,12 @@ class Client(ClientObservable):
     def send_quit_request(self):
         self.request.send(self.request_factory.make_request(
             REQUEST_CLIENT_QUIT
+        ))
+    
+    def _send_get_clients_request(self):
+        """ Send a request to get all online clients"""
+        self.request.send(self.request_factory.make_request(
+            REQUEST_GET_ALL_CLIENTS
         ))
 
     def close(self, reason: str = None):
