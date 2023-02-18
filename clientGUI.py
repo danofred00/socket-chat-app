@@ -302,6 +302,12 @@ class ClientMainUi(tk.Frame):
         self.frames[username] = frame
         self.frames[username].grid(column=0, row=0, sticky='nsew')
 
+        # reshow the last frame
+        try:
+            self.show_frame(self._last_frame_name)
+        except AttributeError:
+            pass
+
     def default_main(self, master) -> tk.Frame:
         frame = tk.Frame(master, background='#302F2F')
 
@@ -317,6 +323,9 @@ class ClientMainUi(tk.Frame):
         """
         frame = self.frames[name]
         frame.tkraise()
+
+        # save the last frame showing
+        self._last_frame_name = name
 
     def _setup_style(self):
 
