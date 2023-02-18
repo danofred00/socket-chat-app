@@ -108,7 +108,7 @@ class ClientGUI(ClientObserver):
         """
             Actions doing when messages are received
         """
-        print('receive data')
+        
         if event.type == RESPONSE_GET_ALL_CLIENTS:
             # we decode content
             clients = event.options['content']
@@ -129,7 +129,7 @@ class ClientGUI(ClientObserver):
 
             # get user about
             # user = (username, addr)
-            user = event.option['content']
+            user = event.options['content']
             print('[+] New user connected %s' % user[0])
 
             # We do action only if the notified user is not the last connected
@@ -137,8 +137,9 @@ class ClientGUI(ClientObserver):
                 # We make a new _ClientChatForm for new user
                 self.main_ui._lateral_insert(
                     user[0], 
-                    self.main_ui._create_clientChatForm,
-                    user={'username':user[0], 'addr':tuple(user[1])}
+                    callback= lambda: self.main_ui._create_clientChatForm(
+                        item={'username':user[0], 'addr':tuple(user[1])}
+                    )
                 )
                 
 
@@ -235,11 +236,13 @@ class ClientMainUi(tk.Frame):
         title = selection['values'][0]
         self.show_frame(title)
     
-    def _lateral_insert(self, value, callback : Optional[Callable], *kwargs):
+    def _lateral_insert(self, value, callback : Optional[Callable], **kwargs):
         
+        print(f'Function called : {value} - {kwargs} - {callback}')
+
         self.lateral.insert('', tk.END, values=(value))
         if callback != None:
-            callback(*kwargs)
+            callback(**kwargs)
 
     def _setup_lateral_bar(self):
         self.lateral = ttk.Treeview(self.content)
