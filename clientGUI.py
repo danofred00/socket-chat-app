@@ -27,10 +27,12 @@ def center_window(window :tk.Tk, width:int, heigth:int):
 
 class ClientGUI(ClientObserver):
 
-    def __init__(self) -> None:
+    def __init__(self, title) -> None:
         super().__init__()
 
         self.window = tk.Tk()
+        self.window.wm_title(title)
+
         self.WINDOW_WIDTH = 1280
         self.WINDOW_HEIGTH = 800
         self._width = None
@@ -160,7 +162,7 @@ class ClientGUI(ClientObserver):
             response = self.client.request.get()
 
             print('response get client info')
-            
+
             # get a username
             username = response.options['content']
 
@@ -606,6 +608,6 @@ def format_str_with_limit(s :str, limit :int, limiter='\n') -> str:
 
 if __name__ == '__main__':
 
-    client = ClientGUI()
+    client = ClientGUI("Socket Chat App")
     client.start()
     
