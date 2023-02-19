@@ -142,10 +142,31 @@ class ClientGUI(ClientObserver):
                     )
                 )
                 
+    def send_message(self, message, receiver):
+        """
+            send the given message to a given receiver
+                - message : represent to message to send
+                - receiver : is the message receiver (host, port)
+        """
+        
+        self.client.request.send(
+            self.client.request_factory.make_request(
+                REQUEST_SEND_TO_CLIENT,
+                headers={'receiver':receiver},
+                options={'content':message}
+            )
+        )
+        
 
     def show_main_ui(self, items, user):
         # show the new user interface
-        self.main_ui = ClientMainUi(self.window, items=items, user=user)
+        self.main_ui = ClientMainUi(
+            self.window, 
+            items=items, 
+            user=user,
+            send_message=self.send_message
+        )
+        
         center_window(self.window, self.main_ui.width, self.main_ui.height)
         self.main_ui.pack()
 
@@ -206,7 +227,8 @@ class ClientMainUi(tk.Frame):
     def __init__(self, 
                  master : tk.Widget, user, 
                  width :int = 1200, height :int = 800, 
-                 items: Optional[Collection] = None
+                 items: Optional[Collection] = None,
+                 send_message : Optional[Callable] = None
                 ) -> None:
         super().__init__(master, width=width, height=height)
 
@@ -216,6 +238,9 @@ class ClientMainUi(tk.Frame):
         ##
         self._items = items
         self._user = user
+
+        # send message function
+        self._send_message = send_message
 
         # setup the screen
         self.setup()
@@ -293,11 +318,13 @@ class ClientMainUi(tk.Frame):
     def _create_clientChatForm(self, item):
         
         username = item['username']
+
         frame = _ClientChatForm(
                 self.main,
-                user=self._user,
+                user=self._user['username'],
                 receiver=item,
-                title=username
+                title=username, 
+                on_btn_clicked=self._send_message
             )
         self.frames[username] = frame
         self.frames[username].grid(column=0, row=0, sticky='nsew')
@@ -362,13 +389,15 @@ class ClientMainUi(tk.Frame):
 class _ClientChatForm(tk.Frame):
 
     def __init__(self, master, 
-                 user , receiver,
+                 user :str, receiver,
                  width :int = 998, height :int = 800,
-                 title :str = None
+                 title :str = None,
+                 on_btn_clicked : Optional[Callable] = None
                 ):
         """
             PARAMS
                 - receiver : (username, (host, port))
+                - user     : username
         """
         super().__init__(master)
 
@@ -380,8 +409,14 @@ class _ClientChatForm(tk.Frame):
         self._user = user
         self._receiver = receiver
 
+        # additionals methods
+        self._on_btn_send_clicked = on_btn_clicked
+
         # setup the widget
         self.setup()
+    
+    def set_on_btn_send_clicked(self, callback : Callable):
+        self._on_btn_send_clicked = callback
 
     def setup(self):
         self._setup_font()
@@ -452,7 +487,7 @@ class _ClientChatForm(tk.Frame):
         
         # draw a message content
         content_x = x1 + (width*6)
-        content_y = y1+(height*CHAR_HEIGHT)
+        content_y = line_y+(height*CHAR_HEIGHT)
         canvas.create_text(content_x, content_y, text=format_str_with_limit(message, limit=20), font=self.font_message_content)
 
         # prepare position for the next message
@@ -489,12 +524,32 @@ class _ClientChatForm(tk.Frame):
         frame = tk.Frame(self)
         self.text_edit = ScrolledText(frame, width=100, height=5)
         self.btn_send = tk.Button(frame, text="Envoyer")
+
+        # configure command for send button
+        self.btn_send.configure(command=self._send_message)
         
         self.text_edit.grid(column=0, row=0, rowspan=3)
         self.btn_send.grid(column=1, row=1, padx=5)
 
         frame.grid(column=0, row=2, sticky='nsew')
 
+    def _send_message(self):
+        
+        # show message to canvas
+        message = str(self.text_edit.get('1.0', tk.END))
+        
+        self.canvas_draw_message(
+            title=self._user, 
+            message=message
+        )
+
+        # clean the text area
+        self.text_edit.delete('1.0', tk.END)
+
+        # send the message if function defined
+        if self._on_btn_send_clicked != None:
+            self._on_btn_send_clicked(message, self._receiver['addr'])
+    
 ##############################
 from math import ceil
 
