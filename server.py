@@ -130,8 +130,7 @@ class Server():
                 print("[+] removing connection for user")
                 self.connections.remove_connection(tuple(response.headers["sender"]))
                 #self.close("[+] Close The server by client request")
-
-            
+  
             elif response.type == REQUEST_STOP_SERVER:
                 self.close("[+] Kill server by user request : " + REQUEST_STOP_SERVER)
 
@@ -142,6 +141,18 @@ class Server():
                     options={'content':self._get_all_clients()}
                 ), use_sock=True, sock=conn)
     
+            elif response.type == REQUEST_GET_CLIENT_INFO:
+
+                user = response.options['content']
+                _conn = self.connections.get_connection_by_addr(user[0], user[1])
+                self.request.send(
+                    self.request_factory.make_request(
+                        RESPONSE_GET_CLIENT_INFO, 
+                        options={'content':_conn.user.username}
+                    ),
+                    use_sock=True, sock=conn
+                )
+
     def _get_all_clients(self):
         
         clients = []

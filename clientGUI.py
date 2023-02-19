@@ -141,7 +141,37 @@ class ClientGUI(ClientObserver):
                         item={'username':user[0], 'addr':tuple(user[1])}
                     )
                 )
-                
+
+        else:
+            message = event.options['content']
+            sender = event.headers['sender']
+
+            # request a client name
+            self.client.request.send(
+                self.client.request_factory.make_request(
+                    REQUEST_GET_CLIENT_INFO,
+                    options={'content':sender}
+                )
+            )
+
+            print('request get client info send')
+
+            # get a response
+            response = self.client.request.get()
+
+            print('response get client info')
+            
+            # get a username
+            username = response.options['content']
+
+            # display a message
+            self.main_ui.frames[username].canvas_draw_message(
+                title=username,
+                message=message,
+                bg_color='blue'
+            )
+
+
     def send_message(self, message, receiver):
         """
             send the given message to a given receiver
