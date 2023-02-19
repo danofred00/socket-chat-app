@@ -275,18 +275,35 @@ class Server():
         self._socket.close()
 
 
+def show_help(name):
+
+    print('Socket Chat App By @Danofred')
+    print(f'Usage: {name} HOST PORT')
+
+if __name__ == '__main__':
+
+    import sys
+
+    if len(sys.argv) != 3:
+
+        show_help(sys.argv[0])
+        sys.exit(-1)
 
 
-HOST = env('CONFIG_HOST')
-PORT = int(env('CONFIG_PORT'))
+    #HOST = env('CONFIG_HOST')
+    #PORT = int(env('CONFIG_PORT'))
 
-# create the server
-server = Server(HOST, PORT)
+    # get from command line
+    HOST = sys.argv[1]
+    PORT = int(sys.argv[2])
 
-# running the server
-server.start()
+    # create the server
+    server = Server(HOST, PORT)
 
-# start handling for incomning connecions and messages from clients
-server.handle()
+    # running the server
+    server.start()
 
-# server.close()
+    # start handling for incomning connecions and messages from clients
+    server.handle()
+
+    # server.close()
