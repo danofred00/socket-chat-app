@@ -81,7 +81,6 @@ class Server():
                     
                 except:
                     print("[+] Exception in handle_client_connection")
-                    
 
     def stop_handling_for_clients_connections(self):
         self.handle_connections = False

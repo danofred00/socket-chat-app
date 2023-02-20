@@ -2,7 +2,7 @@
 
 import tkinter as tk
 import tkinter.messagebox as msgbox
-from typing import Any, Mapping
+from typing import Any, Mapping, Literal
 
 from client.core import ClientObserver
 from client.core import Client
@@ -13,10 +13,12 @@ from client.gui.components import *
 from deps.requests import *
 from deps.utils import *
 
+from constants import *
+
 
 class ClientGUI(ClientObserver):
 
-    def __init__(self, title, host, port) -> None:
+    def __init__(self, title :str, host :str, port :int) -> None:
         super().__init__()
 
         self.window = tk.Tk()
@@ -30,14 +32,12 @@ class ClientGUI(ClientObserver):
         # client observer
         self.client = Client(host_url=host, host_port=port)
         self.client.add_observer(self)
-    
-    def _connect_signals(self):
 
+    def _connect_signals(self):
         # connect events
         self.connect('receive', self._on_client_receive)
 
-    def start(self) -> None :
-        
+    def _connect_by_ui(self):
         # start the client
         self._connect_signals()
 
@@ -47,6 +47,43 @@ class ClientGUI(ClientObserver):
 
         # show the window
         self.window.mainloop()
+
+    def _connect_by_console(self):
+        
+        # start the client
+        self.client.start()
+
+        # request user info
+        username = input('[+] Username : ')
+        password = input('[+] Password : ')
+
+        self.client.set_username(username)
+        self.client.set_password(password)
+
+        # auth the user
+        response = self.client.send_auth_request()
+
+        # check if success
+        if response.type == RESPONSE_AUTH_FAIL:
+            self.client.close("[-] User Authentication Error")
+        elif response.type == RESPONSE_ALREADY_ONLINE:
+            self.client.close("[-] User already online")
+        elif response.type == RESPONSE_AUTH_SUCCESS:
+
+                # show gui
+                self.window.mainloop()
+                # start client handling
+                self.client.handle()
+                # get all clients
+                self._request_get_clients()
+
+    def start(self, mode : Literal['MODE_UI', 'MODE_CONSOLE'] = MODE_UI) -> None :
+        
+        if mode == MODE_UI:
+            self._connect_by_ui()
+        else:
+            self._connect_by_console()
+        
 
     def close(self) -> None:
         self.client.close("[+] Close the Window")
@@ -100,6 +137,7 @@ class ClientGUI(ClientObserver):
         """
         
         if event.type == RESPONSE_GET_ALL_CLIENTS:
+
             # we decode content
             clients = event.options['content']
             
