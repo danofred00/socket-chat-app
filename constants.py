@@ -6,3 +6,5 @@
 
 DB_URL          = "assets/db.json"
 DB_NAME         = None
+
+APP_NAME        = "SOCHAT"
