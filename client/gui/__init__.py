@@ -234,6 +234,11 @@ class ClientGUI(ClientObserver):
         # we setup the menu bar
         self._setup_menu_bar()
 
+        # update app name
+        self.window.wm_title(
+            f'{self.window.wm_title()} - {self.client.username.title()}'
+        )
+
     def _setup_menu_bar(self):
         
         menu_bar = tk.Menu(self.window)
