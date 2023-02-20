@@ -34,6 +34,14 @@ class ClientGUI(ClientObserver):
         self.client = Client(host_url=host, host_port=port)
         self.client.add_observer(self)
 
+        # setup default config 
+        self._setup_default_config_for_window()
+    
+    def _setup_default_config_for_window(self):
+
+        #self.window.minsize(self.WINDOW_WIDTH, self.WINDOW_HEIGTH)
+        self.window.resizable(None, None)
+
     def _connect_signals(self):
         # connect events
         self.connect('receive', self._on_client_receive)
