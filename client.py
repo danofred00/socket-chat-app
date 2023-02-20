@@ -6,17 +6,14 @@ from client.gui import ClientGUI
 def description(app_name) -> str :
     return f"""
     {app_name} is a litte real time chat app with socket
-    
     """
 
 def usage(script_name) -> str :
     return f"""
-    
     USAGE: {script_name} -h HOST -p PORT <mode>
 
     HOST - The server host
     PORT - the server host port
-
     """
 
 if __name__ == '__main__':
@@ -31,6 +28,6 @@ if __name__ == '__main__':
         print(usage(argv[0]))
         exit(-1)
 
-    client = ClientGUI(title=APP_NAME, host=argv[1], port=argv[2])
+    client = ClientGUI(title=APP_NAME, host=argv[1], port=int(argv[2]))
     client.start()        
     

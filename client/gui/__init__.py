@@ -1,10 +1,7 @@
 #coding: UTF-8
 
 import tkinter as tk
-import tkinter.font as font
-import tkinter.ttk as ttk
 import tkinter.messagebox as msgbox
-import tkinter.dialog as dialog
 from typing import Any, Mapping
 
 from client.core import ClientObserver
@@ -34,18 +31,18 @@ class ClientGUI(ClientObserver):
         self.client = Client(host_url=host, host_port=port)
         self.client.add_observer(self)
     
-    def connect_signals(self):
+    def _connect_signals(self):
 
         # connect events
-        self.connect('receive', self.on_client_receive)
+        self.connect('receive', self._on_client_receive)
 
     def start(self) -> None :
         
         # start the client
-        self.connect_signals()
+        self._connect_signals()
 
         # create login ui
-        self._create_login_ui(self.window)
+        self._setup_login_ui(self.window)
         center_window(self.window, self.login.width, self.login.heigth)
 
         # show the window
@@ -55,15 +52,15 @@ class ClientGUI(ClientObserver):
         self.client.close("[+] Close the Window")
         self.window.quit()
 
-    def _create_login_ui(self, master) -> None:
+    def _setup_login_ui(self, master) -> None:
         
         self.login = ClientLoginUI(master)
         
         # setup the action when the login button is clicked
-        self.login.on_loginBtn_clicked = self.on_loginBtn_clicked
+        self.login.on_loginBtn_clicked = self._on_loginBtn_clicked
         self.login.pack()
     
-    def on_loginBtn_clicked(self, username, password):
+    def _on_loginBtn_clicked(self, username, password):
         
         # start the client
         self.client.start()
@@ -83,7 +80,6 @@ class ClientGUI(ClientObserver):
             self.client.close("[-] User already online")
             msgbox.showerror("Login Failed", f"User {username} is already online! Please logout before trying again")
         elif response.type == RESPONSE_AUTH_SUCCESS:
-            print("Success")
             success = msgbox.showinfo("Login Success", "You're Logged in")
 
             if success:
@@ -98,7 +94,7 @@ class ClientGUI(ClientObserver):
     def _request_get_clients(self):
         self.client._send_get_clients_request()
 
-    def on_client_receive(self, event, data = None):
+    def _on_client_receive(self, event, data = None):
         """
             Actions doing when messages are received
         """
@@ -117,7 +113,7 @@ class ClientGUI(ClientObserver):
             # update items list
             # self.main_ui.set_items(clients)
             # show the main ui
-            self.show_main_ui(items=clients, user=current)
+            self._show_main_ui(items=clients, user=current)
         
         elif event.type == RESPONSE_CLIENT_CONNECT:
 
@@ -147,13 +143,8 @@ class ClientGUI(ClientObserver):
                     options={'content':sender}
                 )
             )
-
-            print('request get client info send')
-
             # get a response
             response = self.client.request.get()
-
-            print('response get client info')
 
             # get a username
             username = response.options['content']
@@ -162,10 +153,10 @@ class ClientGUI(ClientObserver):
             self.main_ui.frames[username].canvas_draw_message(
                 title=username,
                 message=message,
-                bg_color='blue'
+                bg_color='white'
             )
 
-    def send_message(self, message, receiver):
+    def _send_message(self, message, receiver):
         """
             send the given message to a given receiver
                 - message : represent to message to send
@@ -180,7 +171,11 @@ class ClientGUI(ClientObserver):
             )
         )
         
-    def show_main_ui(self, items, user):
+    def _show_main_ui(self, items, user):
+
+        # we setup the menu bar
+        self._setup_menu_bar()
+
         # show the new user interface
         self.main_ui = ClientMainUi(
             self.window, 
@@ -192,3 +187,21 @@ class ClientGUI(ClientObserver):
         center_window(self.window, self.main_ui.width, self.main_ui.height)
         self.main_ui.pack()
 
+    def _setup_menu_bar(self):
+        
+        menu_bar = tk.Menu(self.window)
+
+        # setup file menu
+        file_menu = tk.Menu(menu_bar, title="Files", tearoff=0)
+        file_menu.add_command(label='Quit', command=self.close)
+
+        # setup help menu
+        help_menu = tk.Menu(menu_bar, title="Help")
+        help_menu.add_command(label='Help')
+        help_menu.add_command(label='About')
+
+        # setup menu bar
+        menu_bar.add_cascade(menu=file_menu)
+        menu_bar.add_cascade(menu=help_menu)
+
+        menu_bar.pack()
