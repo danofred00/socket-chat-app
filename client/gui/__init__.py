@@ -93,7 +93,6 @@ class ClientGUI(ClientObserver):
         else:
             self._connect_by_console()
         
-
     def close(self) -> None:
         self.client.close("[+] Close the Window")
         self.window.quit()
