@@ -81,19 +81,26 @@ class Server():
                     
                 except:
                     print("[+] Exception in handle_client_connection")
+                    
 
     def stop_handling_for_clients_connections(self):
         self.handle_connections = False
 
-    def stop_handle_for_incoming_msg(self):
-        self.handle_messages = False
-
     def handle_for_incoming_messages(self, conn :socket.socket):
 
-        self.handle_messages = True
+        handle_messages = True
 
-        while self.handle_messages:
-            response = self.request.get(use_sock=True, sock=conn)
+        while handle_messages:
+
+            try:
+                response = self.request.get(use_sock=True, sock=conn)
+            except ConnectionResetError:
+                # Deconnect the client
+                handle_messages = False
+                self.connections.remove_connection_by_sock(conn)
+                # show the message to the log
+                print('[-] Client Deconnecter')
+                break
 
             # getting sender
             _sender = self.connections.get_connection_by_addr(
@@ -130,7 +137,7 @@ class Server():
                 print("[+] removing connection for user")
                 self.connections.remove_connection(tuple(response.headers["sender"]))
                 #self.close("[+] Close The server by client request")
-  
+
             elif response.type == REQUEST_STOP_SERVER:
                 self.close("[+] Kill server by user request : " + REQUEST_STOP_SERVER)
 
