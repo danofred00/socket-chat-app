@@ -2,6 +2,7 @@
 
 import tkinter as tk
 import tkinter.messagebox as msgbox
+from sys import exit
 from typing import Any, Mapping, Literal
 
 from client.core import ClientObserver
@@ -88,6 +89,7 @@ class ClientGUI(ClientObserver):
     def close(self) -> None:
         self.client.close("[+] Close the Window")
         self.window.quit()
+        exit(1)
 
     def _setup_login_ui(self, master) -> None:
         
@@ -211,19 +213,19 @@ class ClientGUI(ClientObserver):
         
     def _show_main_ui(self, items, user):
 
-        # we setup the menu bar
-        self._setup_menu_bar()
-
         # show the new user interface
         self.main_ui = ClientMainUi(
             self.window, 
             items=items, 
             user=user,
-            send_message=self.send_message
+            send_message=self._send_message
         )
         
         center_window(self.window, self.main_ui.width, self.main_ui.height)
         self.main_ui.pack()
+
+        # we setup the menu bar
+        self._setup_menu_bar()
 
     def _setup_menu_bar(self):
         
@@ -234,12 +236,14 @@ class ClientGUI(ClientObserver):
         file_menu.add_command(label='Quit', command=self.close)
 
         # setup help menu
-        help_menu = tk.Menu(menu_bar, title="Help")
+        help_menu = tk.Menu(menu_bar, title="Help", tearoff=0)
         help_menu.add_command(label='Help')
+        help_menu.add_separator()
         help_menu.add_command(label='About')
 
         # setup menu bar
-        menu_bar.add_cascade(menu=file_menu)
-        menu_bar.add_cascade(menu=help_menu)
+        menu_bar.add_cascade(menu=file_menu, label='Files')
+        menu_bar.add_cascade(menu=help_menu, label='Help')
 
-        menu_bar.pack()
+        # configure the main window
+        self.window.config(menu=menu_bar)

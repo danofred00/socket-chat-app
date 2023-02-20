@@ -74,8 +74,6 @@ class ClientMainUi(tk.Frame):
                 ) -> None:
         super().__init__(master, width=width, height=height)
 
-        print('main window')
-
         self.width = width
         self.height = height
 
